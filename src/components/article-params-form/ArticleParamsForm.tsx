@@ -1,106 +1,124 @@
-import React, { useState, useRef } from 'react';
+import { ArrowButton } from 'src/ui/arrow-button';
+import { Text } from 'src/ui/text';
+import { Select } from 'src/ui/select';
+import { RadioGroup } from 'src/ui/radio-group';
+import { Separator } from 'src/ui/separator';
+import { Button } from 'src/ui/button';
 import clsx from 'clsx';
+import { useState, useRef, useEffect, FormEvent } from 'react';
 import styles from './ArticleParamsForm.module.scss';
-import { ArrowButton } from '../arrow-button/ArrowButton';
-import { Button } from '../button/Button';
-import { Text } from '../text/Text';
-import { Select } from '../select/Select';
-import { RadioGroup } from '../radio-group/RadioGroup';
-import { Separator } from '../separator/Separator';
 import {
-	ArticleStateType,
-	defaultArticleState,
-	fontColors,
 	fontFamilyOptions,
-	fontSizeOptions,
+	fontColors,
 	backgroundColors,
 	contentWidthArr,
-} from '../../constants/articleProps';
-import { useOutsideClick } from '../../hooks/useOutsideClick';
+	fontSizeOptions,
+	OptionType,
+	ArticleStateType,
+	defaultArticleState,
+} from 'src/constants/articleProps';
 
-interface ArticleParamsFormProps {
-	isOpen: boolean;
-	setIsOpen: (isOpen: boolean) => void;
-	currentStyles: ArticleStateType;
-	onApplyStyles: (styles: ArticleStateType) => void;
-}
+type ArticleParamsFormProps = {
+	date: ArticleStateType;
+	setDate: (date: ArticleStateType) => void;
+};
 
 export const ArticleParamsForm = ({
-	isOpen,
-	setIsOpen,
-	currentStyles,
-	onApplyStyles,
+	date,
+	setDate,
 }: ArticleParamsFormProps) => {
-	const [formState, setFormState] = useState<ArticleStateType>(currentStyles);
-	const formRef = useRef<HTMLDivElement>(null);
+	//Состояние формы и данных
+	const [form, setForm] = useState(false);
+	const [state, setState] = useState(date);
 
-	useOutsideClick(formRef, () => {
-		if (isOpen) {
-			setIsOpen(false);
+	const formRef = useRef<HTMLFormElement>(null);
+
+	function openFrom() {
+		setForm(!form);
+	}
+	useEffect(() => {
+		function closeFromEsc(event: KeyboardEvent) {
+			if (event.code === 'Escape') setForm(false);
 		}
-	});
+		document.addEventListener('keydown', closeFromEsc);
+		return () => document.removeEventListener('keydown', closeFromEsc);
+	}, [form]);
 
-	const handleToggle = () => setIsOpen(!isOpen);
+	function handleFontFamily(item: OptionType) {
+		setState({ ...state, fontFamilyOption: item });
+	}
+	function handleFontSize(item: OptionType) {
+		setState({ ...state, fontSizeOption: item });
+	}
+	function handleFontColor(item: OptionType) {
+		setState({ ...state, fontColor: item });
+	}
+	function handleBackgroundColor(item: OptionType) {
+		setState({ ...state, backgroundColor: item });
+	}
+	function handlecontentWidth(item: OptionType) {
+		setState({ ...state, contentWidth: item });
+	}
 
-	const handleReset = (e: React.FormEvent) => {
-		e.preventDefault();
-		setFormState(defaultArticleState);
-		onApplyStyles(defaultArticleState);
-	};
-
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault();
-		onApplyStyles(formState);
-	};
-
-	const handleChange =
-		<K extends keyof ArticleStateType>(field: K) =>
-		(value: ArticleStateType[K]) => {
-			setFormState((prev) => ({ ...prev, [field]: value }));
-		};
+	function handleReset() {
+		setState(defaultArticleState);
+		setDate(defaultArticleState);
+	}
+	function handleSubmit(event: FormEvent<HTMLFormElement>) {
+		event.preventDefault();
+		setDate(state);
+	}
 
 	return (
-		<div ref={formRef}>
-			<ArrowButton isOpen={isOpen} onClick={handleToggle} />
+		<>
+			<ArrowButton state={form} openForm={openFrom} />
 			<aside
-				className={clsx(styles.container, { [styles.container_open]: isOpen })}>
+				className={clsx(styles.container, { [styles.container_open]: form })}
+				ref={formRef}>
 				<form
 					className={styles.form}
 					onSubmit={handleSubmit}
 					onReset={handleReset}>
-					<Text as='h2' size={31} weight={800} uppercase>
+					<Text
+						as='h2'
+						size={31}
+						weight={800}
+						family={'open-sans'}
+						uppercase
+						dynamicLite>
 						Задайте параметры
 					</Text>
 					<Select
-						label='Шрифт'
+						title='Шрифт'
 						options={fontFamilyOptions}
-						selected={formState.fontFamilyOption}
-						onChange={handleChange('fontFamilyOption')}
+						selected={state.fontFamilyOption}
+						onChange={handleFontFamily}
 					/>
 					<RadioGroup
-						name='fontSize'
+						name='font size'
+						title='размер шрифта'
 						options={fontSizeOptions}
-						selected={formState.fontSizeOption}
-						onChange={handleChange('fontSizeOption')}
+						selected={state.fontSizeOption}
+						onChange={handleFontSize}
 					/>
 					<Select
-						label='Цвет шрифта'
+						title='Цвет шрифта'
 						options={fontColors}
-						selected={formState.fontColor}
-						onChange={handleChange('fontColor')}
+						selected={state.fontColor}
+						onChange={handleFontColor}
 					/>
 					<Separator />
 					<Select
-						label='Цвет фона'
+						title='Цвет фона'
 						options={backgroundColors}
-						selected={formState.backgroundColor}
-						onChange={handleChange('backgroundColor')}
+						selected={state.backgroundColor}
+						onChange={handleBackgroundColor}
 					/>
 					<Select
-						label='Ширина контента'
+						title='Ширина контента'
 						options={contentWidthArr}
-						selected={formState.contentWidth}
-						onChange={handleChange('contentWidth')}
+						selected={state.contentWidth}
+						onChange={handlecontentWidth}
 					/>
 					<div className={styles.bottomContainer}>
 						<Button title='Сбросить' type='reset' />
@@ -108,6 +126,6 @@ export const ArticleParamsForm = ({
 					</div>
 				</form>
 			</aside>
-		</div>
+		</>
 	);
 };
