@@ -12,25 +12,21 @@ import { useOutsideClickClose } from './hooks/useOutsideClickClose';
 import styles from './Select.module.scss';
 
 type SelectProps = {
-	selected: OptionType | null;
-	options: OptionType[];
-	placeholder?: string;
-	onChange?: (selected: OptionType) => void;
-	onClose?: () => void;
 	title?: string;
+	options: OptionType[];
+	selected: OptionType;
+	onChange: (selected: OptionType) => void;
 };
 
 export const Select = (props: SelectProps) => {
-	const { options, placeholder, selected, onChange, onClose, title } = props;
-	const [isOpen, setIsOpen] = useState<boolean>(false);
+	const { options, selected, onChange, title } = props;
+	const [isOpen, setIsOpen] = useState(false);
 	const rootRef = useRef<HTMLDivElement>(null);
 	const placeholderRef = useRef<HTMLDivElement>(null);
-	const optionClassName = selected?.optionClassName ?? '';
 
 	useOutsideClickClose({
 		isOpen,
 		rootRef,
-		onClose,
 		onChange: setIsOpen,
 	});
 
@@ -41,51 +37,48 @@ export const Select = (props: SelectProps) => {
 
 	const handleOptionClick = (option: OptionType) => {
 		setIsOpen(false);
-		onChange?.(option);
+		onChange(option);
 	};
+
 	const handlePlaceHolderClick: MouseEventHandler<HTMLDivElement> = () => {
-		setIsOpen((isOpen) => !isOpen);
+		setIsOpen(!isOpen);
 	};
 
 	return (
 		<div className={styles.container}>
 			{title && (
-				<>
-					<Text size={12} weight={800} uppercase>
-						{title}
-					</Text>
-				</>
+				<Text size={12} weight={800} uppercase>
+					{title}
+				</Text>
 			)}
 			<div
 				className={styles.selectWrapper}
 				ref={rootRef}
-				data-is-active={isOpen}
-				data-testid='selectWrapper'>
+				data-is-active={isOpen}>
 				<img src={arrowDown} alt='иконка стрелочки' className={styles.arrow} />
 				<div
 					className={clsx(
 						styles.placeholder,
-						(styles as Record<string, string>)[optionClassName]
+						styles[selected.optionClassName || '']
 					)}
-					data-status={status}
-					data-selected={!!selected?.value}
+					data-selected={!!selected.value}
 					onClick={handlePlaceHolderClick}
 					role='button'
 					tabIndex={0}
 					ref={placeholderRef}>
 					<Text
 						family={
-							isFontFamilyClass(selected?.className)
-								? selected?.className
+							isFontFamilyClass(selected.className)
+								? selected.className
 								: undefined
 						}>
-						{selected?.title || placeholder}
+						{selected.title}
 					</Text>
 				</div>
 				{isOpen && (
-					<ul className={styles.select} data-testid='selectDropdown'>
+					<ul className={styles.select}>
 						{options
-							.filter((option) => selected?.value !== option.value)
+							.filter((option) => selected.value !== option.value)
 							.map((option) => (
 								<Option
 									key={option.value}
