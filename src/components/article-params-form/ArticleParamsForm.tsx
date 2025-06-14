@@ -5,7 +5,8 @@ import { RadioGroup } from 'src/ui/radio-group';
 import { Separator } from 'src/ui/separator';
 import { Button } from 'src/ui/button';
 import clsx from 'clsx';
-import { useState, useRef, useEffect, FormEvent } from 'react';
+import { useState, useRef, FormEvent } from 'react';
+import { useOutsideClickClose } from 'src/ui/select/hooks/useOutsideClickClose';
 import styles from './ArticleParamsForm.module.scss';
 import {
 	fontFamilyOptions,
@@ -27,22 +28,22 @@ export const ArticleParamsForm = ({
 	date,
 	setDate,
 }: ArticleParamsFormProps) => {
-	//Состояние формы и данных
 	const [form, setForm] = useState(false);
 	const [state, setState] = useState(date);
 
-	const formRef = useRef<HTMLFormElement>(null);
+	const formRef = useRef<HTMLDivElement>(null);
+
+	// Закрытие по клику вне формы
+	useOutsideClickClose({
+		isOpen: form,
+		rootRef: formRef,
+		onClose: () => setForm(false),
+		onChange: setForm,
+	});
 
 	function openFrom() {
 		setForm(!form);
 	}
-	useEffect(() => {
-		function closeFromEsc(event: KeyboardEvent) {
-			if (event.code === 'Escape') setForm(false);
-		}
-		document.addEventListener('keydown', closeFromEsc);
-		return () => document.removeEventListener('keydown', closeFromEsc);
-	}, [form]);
 
 	function handleFontFamily(item: OptionType) {
 		setState({ ...state, fontFamilyOption: item });
@@ -64,6 +65,7 @@ export const ArticleParamsForm = ({
 		setState(defaultArticleState);
 		setDate(defaultArticleState);
 	}
+
 	function handleSubmit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
 		setDate(state);
@@ -83,7 +85,7 @@ export const ArticleParamsForm = ({
 						as='h2'
 						size={31}
 						weight={800}
-						family={'open-sans'}
+						family='open-sans'
 						uppercase
 						dynamicLite>
 						Задайте параметры
